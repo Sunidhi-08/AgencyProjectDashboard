@@ -1,0 +1,27 @@
+databases:
+  - name: agency-dashboard-db
+    databaseName: agency_dashboard
+    user: agency
+
+services:
+  - type: web
+    name: agency-dashboard-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm install && npm run prisma:generate && npm run build
+    startCommand: npm run prisma:migrate:deploy && npm run start
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: agency-dashboard-db
+          property: connectionString
+      - key: NODE_ENV
+        value: production
+      - key: CLIENT_ORIGIN
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: PORT
+        value: 10000

@@ -50,6 +50,29 @@ Then run the migration, seed, and development commands above.
 
 Open `http://localhost:5173`. The API health endpoint is `http://localhost:4000/api/health`.
 
+## Deploy
+
+Deploy the API and frontend as separate services because Socket.IO needs a long-running Node process.
+
+### Backend: Render
+
+1. Create a new Render Blueprint from this repository; `render.yaml` provisions PostgreSQL and the API service.
+2. Set `CLIENT_ORIGIN` to the final Vercel URL.
+3. Confirm the generated `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` values are present.
+4. After deployment, verify `https://YOUR-API.onrender.com/api/health` returns `{ "status": "ok" }`.
+
+The Render service runs Prisma migrations before starting the API. Run the seed once from a secure environment against the production `DATABASE_URL`; do not publish production seed passwords.
+
+### Frontend: Vercel
+
+1. Import the repository into Vercel.
+2. Set the project root to `client`.
+3. Set the build command to `npm run build` and the output directory to `dist`.
+4. Add `VITE_API_URL=https://YOUR-API.onrender.com` in Vercel project environment variables.
+5. Redeploy, then update the Render `CLIENT_ORIGIN` value with the exact Vercel domain.
+
+The local Vite proxy remains available for development; deployed requests use `VITE_API_URL` and the API's CORS/HttpOnly-cookie configuration.
+
 ## Seed accounts
 
 All seeded accounts use `password123` locally.

@@ -21,6 +21,7 @@ type AuthRequest = Request & { user?: Session };
 const accessSecret = process.env.JWT_ACCESS_SECRET ?? 'development-access-secret';
 const refreshSecret = process.env.JWT_REFRESH_SECRET ?? 'development-refresh-secret';
 const refreshCookie = 'agency_refresh_token';
+const isProduction = process.env.NODE_ENV === 'production';
 
 const projectInput = z.object({ name: z.string().trim().min(1).max(120), clientId: z.coerce.number().int().positive(), managerId: z.coerce.number().int().positive().optional() });
 const taskInput = z.object({ projectId: z.coerce.number().int().positive(), title: z.string().trim().min(1).max(160), description: z.string().trim().max(4000).default(''), developerId: z.coerce.number().int().positive().nullable().optional(), status: z.nativeEnum(TaskStatus).optional(), priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).default('MEDIUM'), dueDate: z.coerce.date() });
@@ -44,7 +45,7 @@ function statusName(status: TaskStatus) {
 function issueRefresh(user: Session, res: Response) {
   const token = jwt.sign({ sub: user.id }, refreshSecret, { expiresIn: '7d' });
   void prisma.refreshToken.create({ data: { tokenHash: hash(token), userId: user.id, expiresAt: new Date(Date.now() + 7 * 86400000) } });
-  res.cookie(refreshCookie, token, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 7 * 86400000 });
+  res.cookie(refreshCookie, token, { httpOnly: true, sameSite: isProduction ? 'none' : 'lax', secure: isProduction, maxAge: 7 * 86400000 });
 }
 
 function requireAuth(req: AuthRequest, _res: Response, next: NextFunction) {
